@@ -17,6 +17,7 @@ const (
 	VerdictCompilationError Verdict = "compilation_error"
 	VerdictInternalError    Verdict = "internal_error"
 	VerdictOutputLimitEx    Verdict = "output_limit"
+	VerdictCancelled        Verdict = "cancelled"
 )
 
 type Status string

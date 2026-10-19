@@ -60,6 +60,8 @@ run_test "go"         'package main\nimport "fmt"\nfunc main(){fmt.Println("Hell
 run_test "java"       'public class Main{public static void main(String[] a){System.out.println("Hello, World!");}}' "Hello, World!"
 run_test "bash"       'echo "Hello, World!"'                         "Hello, World!"
 run_test "rust"       'fn main(){println!("Hello, World!")}'         "Hello, World!"
+run_test "ruby"       'puts "Hello, World!"'                         "Hello, World!"
+run_test "php"        '<?php echo "Hello, World!\n";'                "Hello, World!"
 
 echo ""
 echo "==> Results: ${GREEN}${pass} passed${NC}, ${RED}${fail} failed${NC}"

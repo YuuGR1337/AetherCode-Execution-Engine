@@ -101,6 +101,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/stream", h.HandleStream)
 	mux.HandleFunc("GET /api/v1/health", h.HandleHealth)
 	mux.HandleFunc("GET /api/v1/languages", h.HandleLanguages)
+	mux.HandleFunc("DELETE /api/v1/submissions/{id}", h.HandleCancel)
 }
 
 type executeRequest struct {
@@ -498,4 +499,45 @@ func (h *Handler) HandleLanguages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(langs) //nolint:errcheck
+}
+
+// HandleCancel cancels a queued submission. Only the submission owner (authenticated)
+// or an unauthenticated caller on run-mode jobs may cancel.
+func (h *Handler) HandleCancel(w http.ResponseWriter, r *http.Request) {
+	rawID := r.PathValue("id")
+	parsedID, err := uuid.Parse(rawID)
+	if err != nil {
+		jsonError(w, "invalid submission id", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	identity, hasAuth := auth.GetIdentity(ctx)
+
+	sub, err := db.GetSubmission(ctx, h.pool, parsedID)
+	if err != nil {
+		jsonError(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	// Ownership check — same rules as the SSE stream endpoint.
+	if hasAuth {
+		if sub.TenantID != identity.TenantID || sub.UserID == nil || *sub.UserID != identity.UserID {
+			jsonError(w, "not found", http.StatusNotFound)
+			return
+		}
+	} else if sub.ProblemVersionID != nil {
+		jsonError(w, "authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	if err := db.CancelSubmission(ctx, h.pool, parsedID); err != nil {
+		// Already terminal — return 409 Conflict
+		jsonError(w, "submission is not cancellable (already terminal or not found)", http.StatusConflict)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"cancelled": true}) //nolint:errcheck
 }

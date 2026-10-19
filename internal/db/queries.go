@@ -257,6 +257,21 @@ func OrphanedSubmissions(ctx context.Context, pool *pgxpool.Pool) ([]OrphanedSub
 	return subs, rows.Err()
 }
 
+// CancelSubmission transitions a queued submission to failed/cancelled.
+// Returns an error if the submission is not found or is already in a terminal state.
+func CancelSubmission(ctx context.Context, pool *pgxpool.Pool, id uuid.UUID) error {
+	tag, err := pool.Exec(ctx, `
+		UPDATE submissions SET status = 'failed', verdict = 'cancelled', updated_at = now()
+		WHERE id = $1 AND status = 'queued'`, id)
+	if err != nil {
+		return fmt.Errorf("db: cancel submission: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("db: submission not cancellable (not found or already terminal): %s", id)
+	}
+	return nil
+}
+
 func Truncate(s string, maxBytes int) string {
 	if len(s) <= maxBytes {
 		return s
