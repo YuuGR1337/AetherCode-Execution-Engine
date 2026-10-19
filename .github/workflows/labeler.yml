@@ -4,7 +4,7 @@ name: labeler
 # Labels are defined in .github/labeler.yml
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   label:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/labeler@v5
