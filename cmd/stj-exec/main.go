@@ -47,6 +47,10 @@ func main() {
 	}
 	slog.SetDefault(slog.New(logHandler))
 
+	// Apply sandbox output size limits.
+	sandbox.StdoutMax = cfg.SandboxStdoutMaxBytes
+	sandbox.StderrMax = cfg.SandboxStderrMaxBytes
+
 	// Apply Go runtime tuning before any goroutines are spawned.
 	prev := debug.SetGCPercent(cfg.GOGC)
 	slog.Debug("gc tuning", "GOGC", cfg.GOGC, "previous", prev)

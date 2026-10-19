@@ -62,4 +62,16 @@ var (
 		Name:      "poison_messages_total",
 		Help:      "Messages dead-lettered after exceeding max delivery count.",
 	})
+
+	CompileCacheHitsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "ac",
+		Name:      "compile_cache_hits_total",
+		Help:      "Compile cache hits — source was found in cache, skipping recompilation.",
+	})
+
+	CompileCacheMissesTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "ac",
+		Name:      "compile_cache_misses_total",
+		Help:      "Compile cache misses — source was not in cache, compilation required.",
+	})
 )

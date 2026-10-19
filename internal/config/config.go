@@ -57,6 +57,10 @@ type Config struct {
 	// Go runtime tuning
 	GOGC       int
 	GOMEMLIMIT int64
+
+	// Sandbox output limits
+	SandboxStdoutMaxBytes int64
+	SandboxStderrMaxBytes int64
 }
 
 func Load() Config {
@@ -98,6 +102,9 @@ func Load() Config {
 
 		GOGC:       envInt("AC_GOGC", 200),
 		GOMEMLIMIT: envInt64("AC_GOMEMLIMIT", 0),
+
+		SandboxStdoutMaxBytes: envInt64("AC_SANDBOX_STDOUT_MAX_BYTES", 8<<20),
+		SandboxStderrMaxBytes: envInt64("AC_SANDBOX_STDERR_MAX_BYTES", 1<<20),
 	}
 }
 
@@ -128,6 +135,8 @@ func (c Config) Validate() error {
 	check(c.BlockReadTimeout >= 100*time.Millisecond && c.BlockReadTimeout <= 10*time.Second, "BlockReadTimeout must be 100ms-10s")
 	check(c.GOGC >= 50 && c.GOGC <= 1000, "GOGC must be 50-1000")
 	check(c.GOMEMLIMIT >= 0, "GOMEMLIMIT must be >= 0")
+	check(c.SandboxStdoutMaxBytes > 0 && c.SandboxStdoutMaxBytes <= 64<<20, "SandboxStdoutMaxBytes must be 1-67108864")
+	check(c.SandboxStderrMaxBytes > 0 && c.SandboxStderrMaxBytes <= 64<<20, "SandboxStderrMaxBytes must be 1-67108864")
 
 	if c.AuthEnabled && c.OIDCAudience == "" {
 		errs = append(errs, "OIDCAudience (AC_OIDC_AUDIENCE) is required when auth is enabled")

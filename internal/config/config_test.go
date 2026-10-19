@@ -28,6 +28,8 @@ func validConfig() Config {
 		BlockReadTimeout:         500 * time.Millisecond,
 		GOGC:                     200,
 		GOMEMLIMIT:               0,
+		SandboxStdoutMaxBytes:    8 << 20,
+		SandboxStderrMaxBytes:    1 << 20,
 	}
 }
 

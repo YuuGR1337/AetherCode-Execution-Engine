@@ -1,11 +1,15 @@
 package sandbox
 
+// StdoutMax and StderrMax are the per-test output caps sent to go-judge.
+// They default to 8 MiB and 1 MiB respectively and can be overridden at
+// startup via AC_SANDBOX_STDOUT_MAX_BYTES / AC_SANDBOX_STDERR_MAX_BYTES.
+var (
+	StdoutMax int64 = 8 << 20
+	StderrMax int64 = 1 << 20
+)
+
 const (
-	// Program output a test may produce. Exam answers can be large (e.g. 10^5
-	// numbers); go-judge itself is started with -output-limit 16m.
-	stdoutMax int64 = 8 << 20
-	stderrMax int64 = 1 << 20
-	// Compiler diagnostics stay small.
+	// Compiler diagnostics stay small — not configurable.
 	compileOutMax int64 = 64 << 10
 )
 
@@ -221,6 +225,24 @@ var Languages = map[string]LangConfig{
 		RunMem:     536_870_912,
 		RunProc:    50,
 	},
+	"php": {
+		Compiled:   false,
+		SourcePath: "/w/main.php",
+		RunArgs:    []string{"/usr/bin/php", "/w/main.php"},
+		RunEnv:     []string{"PATH=/usr/bin:/bin", "HOME=/tmp"},
+		RunCPU:     2_000_000_000,
+		RunMem:     536_870_912,
+		RunProc:    50,
+	},
+	"ruby": {
+		Compiled:   false,
+		SourcePath: "/w/main.rb",
+		RunArgs:    []string{"/usr/bin/ruby", "/w/main.rb"},
+		RunEnv:     []string{"PATH=/usr/bin:/bin", "HOME=/tmp"},
+		RunCPU:     2_000_000_000,
+		RunMem:     536_870_912,
+		RunProc:    50,
+	},
 }
 
 // BuildCompileCmd builds the go-judge Cmd for the compilation step.
@@ -265,7 +287,7 @@ func BuildRunCmd(lang LangConfig, sourceCode, stdinData, fileID string, limits R
 	cmd := Cmd{
 		Args:        lang.RunArgs,
 		Env:         lang.RunEnv,
-		Files:       []CmdFile{Stdin(stdinData), Collector("stdout", stdoutMax), Collector("stderr", stderrMax)},
+		Files:       []CmdFile{Stdin(stdinData), Collector("stdout", StdoutMax), Collector("stderr", StderrMax)},
 		CPULimit:    cpu,
 		ClockLimit:  ClockLimit(cpu),
 		MemoryLimit: memory,
