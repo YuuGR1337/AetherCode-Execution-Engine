@@ -82,7 +82,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 
 		slog.Log(r.Context(), level, "http",
 			"method", r.Method,
-			"path", r.URL.Path,
+			"path", sanitizeLogValue(r.URL.Path),
 			"status", sw.status,
 			"duration_ms", duration.Milliseconds(),
 			"bytes", sw.bytes,
@@ -113,6 +113,21 @@ func remoteIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// sanitizeLogValue strips ASCII control characters (including newlines and carriage
+// returns) from user-supplied strings before they are written to structured log
+// output. This prevents log-injection attacks where a crafted path could embed
+// fake log entries or corrupt JSON log output.
+func sanitizeLogValue(s string) string {
+	out := make([]byte, 0, len(s))
+	for i := range len(s) {
+		b := s[i]
+		if b >= 0x20 && b != 0x7f { // printable ASCII only
+			out = append(out, b)
+		}
+	}
+	return string(out)
 }
 
 var knownPaths = map[string]bool{
